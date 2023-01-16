@@ -46,7 +46,24 @@ export default {
       drawer: true,
       items: [],
       burly: '#DEB887',
-      blue: '#6495ED'
+      blue: '#6495ED',
+      menus: [
+        { title: "Dashboard", to: "/dashboard" },
+        { title: "Users", to: "/users" },
+        { title: "User Challenge History", to: "/uchistory" },
+        { title: "User E-Learning Challenge History", to: "/elearn" },
+        { title: "Catalog Manager", to: "/catalogue" },
+        { title: "News Manager", to: "/news-manager" },
+        { title: "Challenge Manager", to: "/challenge" },
+        { title: "E-Learning Challenge Manager", to: "/elearn-challenge-manager"},
+        { title: "Periode Manager", to: "/periode-manager" },
+        { title: "Device Manager", to: "/device-manager" },
+        { title: "Redeem Manager", to: "/redeem-manager" },
+        { title: "Maintenance Manager", to: "/maintenance-manager" },
+        { title: "User Review", to: "/review" },
+        { title: "Package Manager", to: "/package-manager" },
+        { title: "Message Manager", to: "/message-manager" },
+      ]
     };
   },
   methods: {
@@ -56,6 +73,7 @@ export default {
       localStorage.removeItem("token");
       localStorage.removeItem("name");
       localStorage.removeItem("role");
+      localStorage.removeItem("user");
       this.error_message = "Log Out Success";
       this.color = "green";
       this.snackbar = true;
@@ -67,21 +85,21 @@ export default {
 
     dashboardManager() {
       //Nama-nama menu dan route nya
-      this.items.push({ title: "Dashboard", to: "/dashboard" });
-      this.items.push({ title: "Users", to: "/users" });
-      this.items.push({ title: "User Challenge History", to: "/uchistory" });
-      this.items.push({ title: "User E-Learning Challenge History", to: "/elearn" });
-      this.items.push({ title: "Catalog Manager", to: "/catalogue" });
-      this.items.push({ title: "News Manager", to: "/news-manager" });
-      this.items.push({ title: "Challenge Manager", to: "/challenge" });
-      this.items.push({ title: "E-Learning Challenge Manager", to: "/elearn-challenge-manager"});
-      this.items.push({ title: "Periode Manager", to: "/periode-manager" });
-      this.items.push({ title: "Device Manager", to: "/device-manager" });
-      this.items.push({ title: "Redeem Manager", to: "/redeem-manager" });
-      this.items.push({ title: "Maintenance Manager", to: "/maintenance-manager" });
-      this.items.push({ title: "User Review", to: "/review" });
-      this.items.push({ title: "Package Manager", to: "/package-manager" });
-      this.items.push({ title: "Message Manager", to: "/message-manager" });
+      const user = JSON.parse(localStorage.getItem("user"))
+      this.menus.map(menu => {
+        if (+user.is_super === 1) {
+          this.items.push(menu);
+          return
+        }
+        const isExist = user.role.permissions.find(permit => permit.name === menu.title)
+        if(isExist) {
+          this.items.push(menu);
+        }
+      })
+      if(+user.is_super === 1) {
+        this.items.push({ title: "Admin Manager", to: "/admins-manager" })
+        this.items.push({ title: "Role Manager", to: "/roles-manager" })
+      }
     },
   },
   mounted() {
