@@ -56,20 +56,35 @@
                                             md="12"
                                         >
                                             <v-text-field
-                                            v-model="editedItem.name"
-                                            label="Name"
+                                            v-model="editedItem.username"
+                                            label="Username"
+                                            :error-messages="errors.username"
+                                            required
                                             ></v-text-field>
-                                        </v-col>
-                                        <v-col
-                                            cols="6"
-                                            sm="6"
-                                            md="6" 
-                                            v-for="permit in permissions"
-                                            v-bind:key="permit.id">
-                                            <v-checkbox
-                                                v-model="permit.isChecked"
-                                                :label="permit.name"
-                                            ></v-checkbox>
+                                            <v-text-field
+                                            v-model="editedItem.password"
+                                            type="password"
+                                            label="Password"
+                                            :error-messages="errors.password"
+                                            required
+                                            ></v-text-field>
+                                            <v-text-field
+                                            v-model="editedItem.password_confirmation"
+                                            :error-messages="errors.password_confirmation"
+                                            type="password"
+                                            label="Password Confirmation"
+                                            required
+                                            ></v-text-field>
+                                            <v-select
+                                            :items="roles"
+                                            :error-messages="errors.role_id"
+                                            v-model="editedItem.role"
+                                            item-text="name"
+                                            item-value="id"
+                                            label="Role"
+                                            return-object
+                                            required
+                                            ></v-select>
                                         </v-col>
                                         
                                     </v-row>
@@ -120,13 +135,15 @@
                 >
                     mdi-pencil
                 </v-icon>
-                <v-icon
-                    small
-                    color="red"
-                    @click="deleteItem(item)"
-                >
-                    mdi-delete
-                </v-icon>
+                <span v-show="+item.is_super === 0">
+                    <v-icon
+                        small
+                        color="red"
+                        @click="deleteItem(item)"
+                    >
+                        mdi-delete
+                    </v-icon>
+                </span>
             </template>
             <template v-slot:no-data>
                 <v-btn
@@ -156,7 +173,8 @@ export default {
                         sortable: true,
                         value: "id",
                     },
-                    { text: "Name", value: "name" },
+                    { text: "Username", value: "username" },
+                    { text: "Role", value: "role.name" },
                     { text: "Actions", value: "actions" },
             ],
             items: [],
@@ -164,28 +182,34 @@ export default {
             dialog: false,
             dialogDelete: false,
             editedIndex: -1,
-            permissions: [],
+            roles: [],
             editedItem: {
                 id: '',
-                name: '',
-                permissions: []
+                username: '',
+                password: '',
+                password_confirmation: '',
+                role: ''
             },
             defaultItem: {
                 id: '',
-                name: '',
-                permissions: []
+                username: '',
+                password: '',
+                password_confirmation: '',
+                role: ''
             },
             loading: true,
             snackbar: false,
-            message: ''
+            message: '',
+            errors: []
         }
     },
     created () {
         this.initialize()
+        this.getRoles()
     },
     computed: {
         formTitle () {
-            return this.editedIndex === -1 ? 'New Role' : 'Edit Role'
+            return this.editedIndex === -1 ? 'New Admin' : 'Edit Admin'
         },
     },
     watch: {
@@ -198,7 +222,7 @@ export default {
     },
     methods: {
         initialize() {
-                this.$http.get(`${this.$api}/roles`, {
+                this.$http.get(`${this.$api}/user-admins`, {
                         headers: {
                             Authorization: "Bearer " + localStorage.getItem("token"),
                         },
@@ -208,29 +232,24 @@ export default {
                 }).finally(() => {
                     this.loading = false
                 })
-                this.permissions = [
-                    {name: "Dashboard", isChecked: false},
-                    {name: "Users", isChecked: false},
-                    {name: "User Challenge History", isChecked: false},
-                    {name: "User E-Learning Challenge History", isChecked: false},
-                    {name: "Catalog Manager", isChecked: false},
-                    {name: "News Manager", isChecked: false},
-                    {name: "Challenge Manager", isChecked: false},
-                    {name: "E-Learning Challenge Manager" , isChecked: false},
-                    {name: "Periode Manager", isChecked: false},
-                    {name: "Device Manager", isChecked: false},
-                    {name: "Redeem Manager", isChecked: false},
-                    {name: "Maintenance Manager", isChecked: false},
-                    {name: "User Review", isChecked: false},
-                    {name: "Package Manager", isChecked: false},
-                    {name: "Message Manager", isChecked: false},
-                ]
+        },
+        getRoles() {
+                this.$http.get(`${this.$api}/roles`, {
+                        headers: {
+                            Authorization: "Bearer " + localStorage.getItem("token"),
+                        },
+                    }
+                ).then(res => {
+                    this.roles = res.data.data
+                })
         },
         save() {
             if(this.editedIndex === -1) {
-                this.$http.post(`${this.$api}/roles`, {
-                    name: this.editedItem.name,
-                    permissions: this.permissions.filter(permit => permit.isChecked === true)
+                this.$http.post(`${this.$api}/user-admins`, {
+                    username: this.editedItem.username,
+                    password: this.editedItem.password,
+                    password_confirmation: this.editedItem.password_confirmation,
+                    role_id: this.editedItem.role.id
                 },{
                         headers: {
                             Authorization: "Bearer " + localStorage.getItem("token"),
@@ -239,15 +258,21 @@ export default {
                 ).then(res => {
                     this.snackbar = true
                     this.message = res.data.message
+                    this.close()
+                }).catch(err => {
+                    this.snackbar = true
+                    this.message = err.response.data.message
+                    this.errors = err.response.data.errors
                 })
                 .finally(() => {
                     this.initialize()
-                    this.close()
                 })
             } else {
-                this.$http.put(`${this.$api}/roles/${this.editedItem.id}`, {
-                    name: this.editedItem.name,
-                    permissions: this.permissions.filter(permit => permit.isChecked === true)
+                this.$http.put(`${this.$api}/user-admins/${this.editedItem.id}`, {
+                    username: this.editedItem.username,
+                    password: this.editedItem.password,
+                    password_confirmation: this.editedItem.password_confirmation,
+                    role_id: this.editedItem.role.id
                 },{
                         headers: {
                             Authorization: "Bearer " + localStorage.getItem("token"),
@@ -256,23 +281,20 @@ export default {
                 ).then(res => {
                     this.snackbar = true
                     this.message = res.data.message 
+                    this.close()
+                }).catch(err => {
+                    this.snackbar = true
+                    this.message = err.response.data.message
+                    this.errors = err.response.data.errors
                 })
                 .finally(() => {
                     this.initialize()
-                    this.close()
                 })
             }
         },
         editItem(item) {
             this.editedIndex = this.items.indexOf(item)
             this.editedItem = Object.assign({}, item)
-            this.permissions = this.permissions.map(permit => {
-                const isExist = item.permissions.find(i => i.name === permit.name)
-                if(isExist) {
-                    return { ...permit, isChecked: true}
-                }
-                return {...permit, isChecked: false}
-            })
             this.dialog = true
         },
         deleteItem(item) {
@@ -281,7 +303,7 @@ export default {
             this.dialogDelete = true
         },
         deleteItemConfirm () {
-            this.$http.delete(`${this.$api}/roles/${this.editedItem.id}`, {
+            this.$http.delete(`${this.$api}/user-admins/${this.editedItem.id}`, {
                     headers: {
                         Authorization: "Bearer " + localStorage.getItem("token"),
                     },
@@ -298,12 +320,6 @@ export default {
             this.$nextTick(() => {
                 this.editedItem = Object.assign({}, this.defaultItem)
                 this.editedIndex = -1
-            })
-            this.permissions = this.permissions.map(i => {
-                return {
-                    ...i,
-                    isChecked: false
-                }
             })
         },
         closeDelete () {

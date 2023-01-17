@@ -58,6 +58,8 @@
                                             <v-text-field
                                             v-model="editedItem.name"
                                             label="Name"
+                                            :error-messages="errors.name"
+                                            required
                                             ></v-text-field>
                                         </v-col>
                                         <v-col
@@ -177,7 +179,8 @@ export default {
             },
             loading: true,
             snackbar: false,
-            message: ''
+            message: '',
+            errors: []
         }
     },
     created () {
@@ -239,10 +242,15 @@ export default {
                 ).then(res => {
                     this.snackbar = true
                     this.message = res.data.message
+                    this.close()
+                }).catch(err => {
+                    this.snackbar = true
+                    this.message = err.response.data.message
+                    this.errors = err.response.data.errors
                 })
                 .finally(() => {
                     this.initialize()
-                    this.close()
+                    // this.close()
                 })
             } else {
                 this.$http.put(`${this.$api}/roles/${this.editedItem.id}`, {
@@ -256,10 +264,14 @@ export default {
                 ).then(res => {
                     this.snackbar = true
                     this.message = res.data.message 
+                    this.close()
+                }).catch(err => {
+                    this.snackbar = true
+                    this.message = err.response.data.message
+                    this.errors = err.response.data.errors
                 })
                 .finally(() => {
                     this.initialize()
-                    this.close()
                 })
             }
         },
