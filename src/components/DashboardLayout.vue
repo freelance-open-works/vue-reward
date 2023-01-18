@@ -100,6 +100,7 @@ export default {
         this.items.push({ title: "Admin Manager", to: "/admins-manager" })
         this.items.push({ title: "Role Manager", to: "/roles-manager" })
       }
+      this.items.push({ title: "Profile", to: "/profile" })
     },
   },
   mounted() {

@@ -76,6 +76,7 @@
                                             required
                                             ></v-text-field>
                                             <v-select
+                                            v-show="+editedItem.is_super === 0"
                                             :items="roles"
                                             :error-messages="errors.role_id"
                                             v-model="editedItem.role"
@@ -188,14 +189,16 @@ export default {
                 username: '',
                 password: '',
                 password_confirmation: '',
-                role: ''
+                role: '',
+                is_super: 0
             },
             defaultItem: {
                 id: '',
                 username: '',
                 password: '',
                 password_confirmation: '',
-                role: ''
+                role: '',
+                is_super: 0
             },
             loading: true,
             snackbar: false,

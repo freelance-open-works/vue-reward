@@ -55,6 +55,12 @@ const router = new VueRouter({
           meta: { title: "Admin Manager" },
           component: importComponent("DataMaster/AdminManager")
         },
+        {
+          path: "/profile",
+          name: "Profile",
+          meta: { title: "Profile" },
+          component: importComponent("DataMaster/Profile")
+        },
         //E-Learning Challenge History
         {
           path: "/elearn",
